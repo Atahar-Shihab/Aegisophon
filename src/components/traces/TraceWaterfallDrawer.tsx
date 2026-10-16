@@ -162,11 +162,59 @@ export function TraceWaterfallDrawer({ trace, onClose }: TraceWaterfallDrawerPro
             </div>
           )}
 
+          {/* Interactive Pipeline DAG Flow */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-white font-semibold">Interactive Pipeline DAG Execution Path</span>
+              <span className="text-[10px] text-accent-indigo">Zero-Drop Telemetry</span>
+            </div>
+
+            <div className="p-3 bg-obsidian-card border border-obsidian-border rounded-xl overflow-x-auto">
+              <div className="flex items-center gap-1.5 min-w-max text-[10px] font-mono">
+                {trace.hops.map((hop, i) => {
+                  const isCacheHit = hop.status === 'cache_hit';
+                  const isSkipped = hop.status === 'skipped';
+                  const isDegraded = hop.status === 'degraded';
+                  const isFailed = hop.status === 'failed';
+
+                  return (
+                    <React.Fragment key={i}>
+                      <div
+                        onClick={() => toggleHop(i)}
+                        className={cn(
+                          'px-2.5 py-1.5 rounded-lg border cursor-pointer transition-all flex flex-col items-center gap-0.5 select-none',
+                          isCacheHit
+                            ? 'bg-accent-emerald/20 border-accent-emerald text-accent-emerald shadow-glow-emerald'
+                            : isDegraded
+                            ? 'bg-accent-amber/15 border-accent-amber text-accent-amber'
+                            : isFailed
+                            ? 'bg-accent-rose/15 border-accent-rose text-accent-rose'
+                            : isSkipped
+                            ? 'bg-obsidian-bg/50 border-obsidian-border text-obsidian-text-muted opacity-60'
+                            : 'bg-obsidian-hover border-obsidian-border hover:border-obsidian-border-active text-white'
+                        )}
+                        title={hop.stage}
+                      >
+                        <span className="font-semibold truncate max-w-[90px]">
+                          {hop.stage.split('.')[1] || hop.stage}
+                        </span>
+                        <span className="text-[9px] opacity-80">{hop.durationMs}ms</span>
+                      </div>
+                      {i < trace.hops.length - 1 && (
+                        <span className="text-obsidian-border font-bold text-xs select-none">→</span>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
           {/* Granular Pipeline Gantt Waterfall */}
           <div className="space-y-3">
             <div className="flex items-center justify-between text-xs font-mono">
               <span className="text-white font-semibold">Microsecond Pipeline Hop Gantt</span>
-              <span className="text-obsidian-text-muted">6 Instrument Stages</span>
+              <span className="text-obsidian-text-muted">{trace.hops.length} Instrument Stages</span>
             </div>
 
             <div className="space-y-2">

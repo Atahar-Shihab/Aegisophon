@@ -9,10 +9,21 @@ export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 export type PipelineStage =
   | 'auth.verify_key'
   | 'ratelimit.sliding_window'
+  | 'security.guardrails_audit'
   | 'cache.semantic_lookup'
   | 'router.moe_classification'
   | 'circuit_breaker.provider_dispatch'
   | 'response.stream_complete';
+
+export interface GuardrailScanResult {
+  passed: boolean;
+  blocked: boolean;
+  injectionsDetected: string[];
+  piiRedacted: Array<{ type: 'email' | 'ssn' | 'credit_card' | 'api_key'; match: string; redacted: string }>;
+  sanitizedPrompt: string;
+  riskScore: number; // 0.0 to 1.0
+  latencyMs: number;
+}
 
 export interface PipelineHop {
   stage: PipelineStage;
@@ -69,6 +80,12 @@ export interface CircuitBreakerState {
   p95LatencyMs: number;
   recentLatencies: number[];
   chaosOverride?: ChaosConfig;
+  adaptiveAnomalyDetection?: {
+    ewmaLatencyMs: number;
+    latencyVariance: number;
+    zScore: number;
+    anomalyDetected: boolean;
+  };
 }
 
 export interface RoutingPolicy {

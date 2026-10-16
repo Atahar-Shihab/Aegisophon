@@ -17,6 +17,8 @@ import { FinOpsLedger } from '../core/finops/ledger';
 import { TraceService } from './trace.service';
 import { TelemetryBroadcaster } from './telemetry.service';
 import { PolicyService } from './policy.service';
+import { PromptGuardrailScanner } from '../core/security/guardrail';
+import { AuditLogService } from './audit.service';
 
 export class GatewayService {
   private static instance: GatewayService;
@@ -105,11 +107,63 @@ export class GatewayService {
     });
 
     // ──────────────────────────────────────────────
+    // HOP 2.5: Enterprise Security Guardrails & PII Audit
+    // ──────────────────────────────────────────────
+    const guardStart = performance.now();
+    const guardResult = PromptGuardrailScanner.scan(req.prompt);
+    const guardDuration = Number((performance.now() - guardStart).toFixed(2));
+
+    if (guardResult.blocked) {
+      hops.push({
+        stage: 'security.guardrails_audit',
+        durationMs: guardDuration,
+        status: 'failed',
+        metadata: {
+          riskScore: guardResult.riskScore,
+          injections: guardResult.injectionsDetected,
+          blocked: true,
+        },
+      });
+
+      AuditLogService.getInstance().record({
+        actor: apiKeyRecord.name,
+        action: 'CHAOS_INJECTED',
+        targetResource: 'prompt_guardrails',
+        ipAddress: '127.0.0.1',
+        diff: {
+          after: {
+            event: 'PROMPT_INJECTION_BLOCKED',
+            riskScore: guardResult.riskScore,
+            injections: guardResult.injectionsDetected,
+          },
+        },
+      });
+
+      return {
+        error: `Security Guardrail Blocked: Malicious Prompt Injection Detected (${guardResult.injectionsDetected.join(', ')})`,
+        statusCode: 400,
+      };
+    }
+
+    hops.push({
+      stage: 'security.guardrails_audit',
+      durationMs: guardDuration,
+      status: 'ok',
+      metadata: {
+        riskScore: guardResult.riskScore,
+        piiRedactedCount: guardResult.piiRedacted.length,
+        redactedTypes: guardResult.piiRedacted.map((p) => p.type),
+      },
+    });
+
+    const activePrompt = guardResult.sanitizedPrompt;
+
+    // ──────────────────────────────────────────────
     // HOP 3: Semantic Vector Cache Lookup
     // ──────────────────────────────────────────────
     const hop3Start = performance.now();
     const semanticCache = SemanticVectorCache.getInstance();
-    const cacheResult = semanticCache.lookup(req.prompt, policy.semanticCacheThreshold);
+    const cacheResult = semanticCache.lookup(activePrompt, policy.semanticCacheThreshold);
     const hop3Duration = Number((performance.now() - hop3Start).toFixed(2));
 
     if (cacheResult.hit && cacheResult.entry) {
@@ -214,7 +268,7 @@ export class GatewayService {
     const hop4Start = performance.now();
     const router = MoERouter.getInstance();
     const route = router.route({
-      prompt: req.prompt,
+      prompt: activePrompt,
       requestedModel: req.model,
       routingMode: req.routingMode || policy.mode,
       tier1Cutoff: policy.complexityCutoffTier1,
@@ -256,14 +310,14 @@ export class GatewayService {
 
       if (req.model && req.model.startsWith('simulator')) {
         providerResult = await DeterministicSimulator.execute({
-          prompt: req.prompt,
+          prompt: activePrompt,
           model: route.model,
           chaosConfig: snapshot.chaosOverride,
         });
       } else {
         providerResult = await ProviderAdapterRegistry.execute(route.provider, {
           model: route.model,
-          prompt: req.prompt,
+          prompt: activePrompt,
           temperature: req.temperature,
           maxTokens: req.maxTokens,
         });
@@ -282,7 +336,7 @@ export class GatewayService {
       ];
 
       providerResult = await DeterministicSimulator.execute({
-        prompt: req.prompt,
+        prompt: activePrompt,
         model: 'simulator-fast',
       });
 
