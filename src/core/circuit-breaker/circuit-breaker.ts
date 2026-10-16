@@ -19,6 +19,10 @@ export class ProviderCircuitBreaker {
   private recentResults: boolean[] = []; // true = success, false = fail
   private recentLatencies: number[] = [];
   private chaosOverride?: ChaosConfig;
+  private ewmaLatencyMs = 0;
+  private latencyVariance = 0;
+  private lastZScore = 0;
+  private anomalyDetected = false;
 
   constructor(
     public readonly providerId: ProviderType,
@@ -69,6 +73,21 @@ export class ProviderCircuitBreaker {
     this.successCount++;
     this.appendResult(true, latencyMs);
 
+    // Adaptive EWMA Latency & Z-Score Anomaly Tracking
+    if (this.ewmaLatencyMs === 0) {
+      this.ewmaLatencyMs = latencyMs;
+      this.latencyVariance = 100; // baseline variance
+    } else {
+      const alpha = 0.2;
+      const diff = latencyMs - this.ewmaLatencyMs;
+      this.ewmaLatencyMs = Number((alpha * latencyMs + (1 - alpha) * this.ewmaLatencyMs).toFixed(1));
+      this.latencyVariance = Number(((1 - alpha) * (this.latencyVariance + alpha * diff * diff)).toFixed(1));
+    }
+
+    const stdDev = Math.sqrt(Math.max(1, this.latencyVariance));
+    this.lastZScore = Number(((latencyMs - this.ewmaLatencyMs) / stdDev).toFixed(2));
+    this.anomalyDetected = this.lastZScore >= 3.0 && this.recentLatencies.length >= 6;
+
     const currentState = this.getState();
     if (currentState === 'HALF_OPEN') {
       this.consecutiveSuccesses++;
@@ -76,9 +95,9 @@ export class ProviderCircuitBreaker {
         this.transitionTo('CLOSED');
       }
     } else if (currentState === 'CLOSED') {
-      // Check P95 latency degradation
+      // Check P95 latency degradation or catastrophic latency anomaly
       const p95 = this.calculateP95Latency();
-      if (p95 > opts.p95LatencyThresholdMs && this.recentResults.length >= opts.minRequestsInWindow) {
+      if ((p95 > opts.p95LatencyThresholdMs || (this.anomalyDetected && latencyMs > 2500)) && this.recentResults.length >= opts.minRequestsInWindow) {
         this.transitionTo('OPEN');
       }
     }
@@ -185,6 +204,12 @@ export class ProviderCircuitBreaker {
       p95LatencyMs: this.calculateP95Latency(),
       recentLatencies: [...this.recentLatencies],
       chaosOverride: this.chaosOverride,
+      adaptiveAnomalyDetection: {
+        ewmaLatencyMs: this.ewmaLatencyMs,
+        latencyVariance: this.latencyVariance,
+        zScore: this.lastZScore,
+        anomalyDetected: this.anomalyDetected,
+      },
     };
   }
 }

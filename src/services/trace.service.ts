@@ -118,6 +118,12 @@ export class TraceService {
         { stage: 'auth.verify_key', durationMs: 0.8, status: 'ok' },
         { stage: 'ratelimit.sliding_window', durationMs: 1.1, status: 'ok' },
         {
+          stage: 'security.guardrails_audit',
+          durationMs: 0.5,
+          status: 'ok',
+          metadata: { riskScore: 0.0, piiRedactedCount: 0 },
+        },
+        {
           stage: 'cache.semantic_lookup',
           durationMs: sample.cacheHit ? 6.2 : 3.8,
           status: sample.cacheHit ? 'cache_hit' : 'ok',
