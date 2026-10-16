@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { ComplexityMeter } from '@/components/playground/ComplexityMeter';
@@ -39,7 +39,7 @@ const PROMPT_PRESETS = [
   },
 ];
 
-export default function PlaygroundPage() {
+function PlaygroundContent() {
   const searchParams = useSearchParams();
   const replayId = searchParams.get('replayId');
 
@@ -406,5 +406,19 @@ export default function PlaygroundPage() {
         </div>
       </div>
     </AppShell>
+  );
+}
+
+export default function PlaygroundPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-obsidian-bg text-obsidian-text-muted font-mono text-xs">
+          Loading Time-Travel Studio...
+        </div>
+      }
+    >
+      <PlaygroundContent />
+    </Suspense>
   );
 }

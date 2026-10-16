@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AppShell } from '@/components/shell/AppShell';
 import { TraceWaterfallDrawer } from '@/components/traces/TraceWaterfallDrawer';
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
 
-export default function TracesPage() {
+function TracesContent() {
   const searchParams = useSearchParams();
   const initialId = searchParams.get('id');
 
@@ -266,5 +266,19 @@ export default function TracesPage() {
         />
       </div>
     </AppShell>
+  );
+}
+
+export default function TracesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-obsidian-bg text-obsidian-text-muted font-mono text-xs">
+          Loading Trace Waterfall...
+        </div>
+      }
+    >
+      <TracesContent />
+    </Suspense>
   );
 }
