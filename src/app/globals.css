@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #090a0f;
+  --surface-elevated: #11131a;
+  --surface-hover: #171a24;
+  --border-hairline: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  background-color: #090a0f;
+  color: #f8fafc;
+  font-family: var(--font-sans), system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090a0f;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e2230;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #2a3045;
+}
+
+/* Monospace tabular nums helper */
+.mono-nums {
+  font-family: var(--font-mono), monospace;
+  font-variant-numeric: tabular-nums;
+}

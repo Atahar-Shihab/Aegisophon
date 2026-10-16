@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  aegis-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aegis-gateway-service
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/v1/circuit"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
