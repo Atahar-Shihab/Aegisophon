@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Cpu,
   Layers,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +41,11 @@ const NAV_ITEMS = [
     name: 'Security & Keys',
     href: '/security',
     icon: ShieldCheck,
+  },
+  {
+    name: 'API Reference',
+    href: '/docs',
+    icon: BookOpen,
   },
 ];
 

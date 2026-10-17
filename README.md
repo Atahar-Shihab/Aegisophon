@@ -197,7 +197,40 @@ Accept: text/event-stream
 ```
 Streams `snapshot`, `trace`, and `circuit` events in real time to connected dashboards.
 
-### 3. Chaos Engineering Fault Injection
+### 3. Kubernetes Liveness & Readiness Probe
+```http
+GET /api/v1/health
+```
+Returns overall health status (`healthy`, `degraded`, `unhealthy`), sub-system statuses, active providers, and memory footprint:
+```json
+{
+  "status": "healthy",
+  "version": "1.0.0",
+  "uptimeSeconds": 142.5,
+  "subsystems": {
+    "circuitBreakerMesh": { "status": "operational", "totalProviders": 4, "trippedProviders": 0 },
+    "semanticCache": { "status": "operational", "vectorDimensions": 128, "maxCapacity": 5000 },
+    "rateLimiter": { "status": "operational", "algorithm": "sliding_window_counter" },
+    "securityVault": { "status": "operational", "hashingAlgorithm": "SHA-256" }
+  }
+}
+```
+
+### 4. Prometheus Metrics Exposition (Scrape Target)
+```http
+GET /api/v1/metrics
+```
+Exposes metrics in standard Prometheus text exposition format (version 0.0.4) for automated scraping by Prometheus, Datadog, or Grafana Agent:
+- `aegis_gateway_requests_total`
+- `aegis_gateway_latency_ms_p95`
+- `aegis_circuit_breaker_state{provider="..."}`
+- `aegis_finops_saved_dollars_total`
+
+### 5. OpenAPI 3.1.0 Specification & Interactive Portal
+- Interactive Developer Portal: `http://localhost:3000/docs` (interactive cURL, Python, TypeScript code snippets, schema explorer, and live request sandbox).
+- Raw OpenAPI 3.1.0 JSON Spec: `GET /api/v1/openapi.json`.
+
+### 6. Chaos Engineering Fault Injection
 ```http
 POST /api/v1/chaos
 Content-Type: application/json
@@ -208,7 +241,7 @@ Content-Type: application/json
 }
 ```
 
-### 4. Time-Travel Trace Replay
+### 7. Time-Travel Trace Replay
 ```http
 POST /api/v1/traces/:id/replay
 Content-Type: application/json
@@ -262,11 +295,12 @@ OPENAI_API_KEY=your_openai_api_key
 
 | Verification Stage | Command | Result |
 | :--- | :--- | :--- |
-| **Unit & Integration Tests** | `npm run test` | **34 / 34 Passed (100%)** |
+| **Unit & Integration Tests** | `npm run test` | **39 / 39 Passed (100% across 10 suites)** |
 | **High-Concurrency Benchmark** | `npm run benchmark` | **730.6 req/sec (100% Success)** |
 | **TypeScript Strict Check** | `npm run typecheck` | **0 Errors (`tsc --noEmit`)** |
-| **Next.js Production Build** | `npm run build` | **All 9 Pages & API Routes Compiled** |
-| **Server Health Check** | `GET /api/v1/circuit` | **HTTP 200 OK** |
+| **Next.js Production Build** | `npm run build` | **All 10 Pages & Endpoints Compiled** |
+| **Kubernetes Health Probe** | `GET /api/v1/health` | **HTTP 200 OK (Subsystems Operational)** |
+| **Prometheus Exposition** | `GET /api/v1/metrics` | **HTTP 200 OK (`text/plain; v=0.0.4`)** |
 
 ---
 
