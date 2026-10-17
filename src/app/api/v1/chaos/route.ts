@@ -3,10 +3,14 @@ import { CircuitBreakerMesh } from '@/core/circuit-breaker/circuit-breaker';
 import { ProviderType, ChaosConfig } from '@/core/types';
 import { TelemetryBroadcaster } from '@/services/telemetry.service';
 import { AuditLogService } from '@/services/audit.service';
+import { RbacService } from '@/core/security/rbac';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  const rbac = RbacService.enforce(req, 'inject_chaos');
+  if (!rbac.allowed) return rbac.response;
+
   try {
     const body = await req.json();
     const provider: ProviderType = body.provider;

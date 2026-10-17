@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PolicyService } from '@/services/policy.service';
 import { AuditLogService } from '@/services/audit.service';
+import { RbacService } from '@/core/security/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  const rbac = RbacService.enforce(req, 'update_policy');
+  if (!rbac.allowed) return rbac.response;
+
   try {
     const body = await req.json();
     const tenantId = body.tenantId || 'tenant_enterprise_default';

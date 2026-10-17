@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { NavigationSidebar } from './NavigationSidebar';
 import { TopHeader } from './TopHeader';
 import { CommandPalette } from './CommandPalette';
+import { WorkspaceRoleProvider } from '@/context/WorkspaceRoleContext';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -14,9 +15,10 @@ export function AppShell({ children, title }: AppShellProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen bg-obsidian-bg text-obsidian-text-primary">
-      {/* Sidebar Rail */}
-      <NavigationSidebar />
+    <WorkspaceRoleProvider>
+      <div className="flex min-h-screen bg-obsidian-bg text-obsidian-text-primary">
+        {/* Sidebar Rail */}
+        <NavigationSidebar />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
@@ -33,5 +35,6 @@ export function AppShell({ children, title }: AppShellProps) {
         onClose={() => setPaletteOpen(false)}
       />
     </div>
+    </WorkspaceRoleProvider>
   );
 }

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { SecurityService } from '@/services/security.service';
 import { AuditLogService } from '@/services/audit.service';
 
+import { RbacService } from '@/core/security/rbac';
+
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
@@ -12,6 +14,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  const rbac = RbacService.enforce(req, 'create_key');
+  if (!rbac.allowed) return rbac.response;
+
   try {
     const body = await req.json();
     if (!body.name || body.name.trim().length === 0) {

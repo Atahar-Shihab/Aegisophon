@@ -1,7 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { CircuitBreakerMesh } from '@/core/circuit-breaker/circuit-breaker';
 import { TelemetryBroadcaster } from '@/services/telemetry.service';
 import { AuditLogService } from '@/services/audit.service';
+import { RbacService } from '@/core/security/rbac';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +12,10 @@ export async function GET() {
   return NextResponse.json({ circuits });
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const rbac = RbacService.enforce(req, 'reset_circuit');
+  if (!rbac.allowed) return rbac.response;
+
   const mesh = CircuitBreakerMesh.getInstance();
   mesh.resetAll();
 
