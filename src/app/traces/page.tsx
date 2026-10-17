@@ -61,12 +61,14 @@ function TracesContent() {
 
   useEffect(() => {
     fetchTraces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providerFilter, tierFilter, statusFilter, cacheHitOnly]);
 
   useEffect(() => {
     if (!autoRefresh) return;
     const interval = setInterval(fetchTraces, 3500);
     return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoRefresh, providerFilter, tierFilter, statusFilter, cacheHitOnly, search]);
 
   return (
