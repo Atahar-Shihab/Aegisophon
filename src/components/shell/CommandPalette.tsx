@@ -14,6 +14,7 @@ import {
   Play,
   Pause,
   AlertTriangle,
+  BookOpen,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -121,6 +122,12 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           name: 'Manage Cryptographic API Keys & Security Audit',
           icon: ShieldCheck,
           action: () => navigate('/security'),
+        },
+        {
+          id: 'nav-docs',
+          name: 'Open Interactive API Reference & OpenAPI Docs',
+          icon: BookOpen,
+          action: () => navigate('/docs'),
         },
       ],
     },
