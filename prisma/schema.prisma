@@ -1,0 +1,133 @@
+// AegisGateway Enterprise Multi-Tenant Persistence Schema
+// Supports PostgreSQL, SQLite, and MongoDB via Prisma Client
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum ModelTier {
+  TIER_1_FAST     @map("tier-1-fast")
+  TIER_2_BALANCED @map("tier-2-balanced")
+  TIER_3_DEEP     @map("tier-3-deep")
+}
+
+enum ProviderType {
+  GEMINI
+  OPENAI
+  ANTHROPIC
+  SIMULATOR
+}
+
+enum TraceStatus {
+  SUCCEEDED
+  FAILED
+  RATE_LIMITED
+  FALLBACK_ROUTED
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  DEVELOPER
+  VIEWER
+}
+
+model Tenant {
+  id               String          @id @default(uuid())
+  slug             String          @unique
+  name             String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  apiKeys          ApiKey[]
+  routingPolicy    RoutingPolicy?
+  traces           RequestTrace[]
+  auditLogs        AuditLog[]
+}
+
+model ApiKey {
+  id           String      @id @default(uuid())
+  tenantId     String
+  tenant       Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  name         String
+  keyPrefix    String      // e.g. "ag_live_9f8a...3b1c"
+  keyHash      String      @unique // SHA-256 hashed secret
+  role         UserRole    @default(DEVELOPER)
+  rateLimitRpm Int         @default(120)
+  rateLimitTpm Int         @default(100000)
+  status       String      @default("active")
+  createdAt    DateTime    @default(now())
+  expiresAt    DateTime?
+  lastUsedAt   DateTime?
+  traces       RequestTrace[]
+
+  @@index([keyHash])
+  @@index([tenantId])
+}
+
+model RoutingPolicy {
+  id                     String       @id @default(uuid())
+  tenantId               String       @unique
+  tenant                 Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  mode                   String       @default("auto-moe")
+  semanticCacheThreshold Float        @default(0.92)
+  complexityCutoffTier1  Float        @default(0.35)
+  complexityCutoffTier2  Float        @default(0.70)
+  primaryProvider        ProviderType @default(GEMINI)
+  fallbackProvider       ProviderType @default(ANTHROPIC)
+  maxMonthlyBudgetUsd    Float        @default(5000.0)
+  currentMonthlySpendUsd Float        @default(0.0)
+  updatedAt              DateTime     @updatedAt
+}
+
+model RequestTrace {
+  id                   String        @id
+  tenantId             String
+  tenant               Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  apiKeyId             String?
+  apiKey               ApiKey?       @relation(fields: [apiKeyId], references: [id])
+  timestamp            DateTime      @default(now())
+  promptPreview        String
+  promptFull           String
+  responsePreview      String
+  complexityScore      Float
+  routingTier          ModelTier
+  provider             ProviderType
+  modelRouted          String
+  cacheHit             Boolean       @default(false)
+  promptTokens         Int           @default(0)
+  completionTokens     Int           @default(0)
+  totalTokens          Int           @default(0)
+  actualCost           Float         @default(0.0)
+  frontierCostBaseline Float         @default(0.0)
+  dollarsSaved         Float         @default(0.0)
+  latencyMs            Float
+  statusCode           Int           @default(200)
+  status               TraceStatus   @default(SUCCEEDED)
+  hopsJson             Json          // Stores PipelineHop array: stage, durationMs, status, metadata
+  failoverHistoryJson  Json?
+
+  @@index([tenantId, timestamp(sort: Desc)])
+  @@index([provider])
+  @@index([cacheHit])
+  @@index([routingTier])
+}
+
+model AuditLog {
+  id             String    @id @default(uuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  timestamp      DateTime  @default(now())
+  actor          String
+  action         String
+  targetResource String
+  ipAddress      String
+  diffJson       Json?
+
+  @@index([tenantId, timestamp(sort: Desc)])
+  @@index([action])
+}
