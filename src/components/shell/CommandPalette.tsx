@@ -15,15 +15,17 @@ import {
   Pause,
   AlertTriangle,
   BookOpen,
+  Code2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenIntegrationModal?: () => void;
 }
 
-export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
+export function CommandPalette({ isOpen, onClose, onOpenIntegrationModal }: CommandPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState('');
 
@@ -134,6 +136,15 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     {
       group: 'Chaos Engineering & Operations',
       items: [
+        {
+          id: 'op-sdk',
+          name: 'Integrate Gateway SDK (OpenAI Drop-In Code Snippets)',
+          icon: Code2,
+          action: () => {
+            onClose();
+            onOpenIntegrationModal?.();
+          },
+        },
         {
           id: 'op-traffic',
           name: 'Toggle Live Background Traffic Simulator',

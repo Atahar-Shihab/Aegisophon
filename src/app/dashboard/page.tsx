@@ -7,6 +7,7 @@ import { KpiCard } from '@/components/dashboard/KpiCard';
 import { ProviderMeshGrid } from '@/components/dashboard/ProviderMeshGrid';
 import { LatencyAreaChart } from '@/components/dashboard/LatencyAreaChart';
 import { FinOpsSavingsChart } from '@/components/dashboard/FinOpsSavingsChart';
+import { RoutingTopologyGraph } from '@/components/dashboard/RoutingTopologyGraph';
 import { TelemetrySnapshot, RequestTrace, ProviderType } from '@/core/types';
 import {
   Activity,
@@ -118,6 +119,14 @@ export default function DashboardPage() {
             icon={Coins}
             badge="MoE Down-Route"
             badgeType="emerald"
+          />
+        </section>
+
+        {/* Live Interactive DAG Routing Topology */}
+        <section>
+          <RoutingTopologyGraph
+            circuits={circuits}
+            cacheHitRatio={snapshot?.cacheHitRatio || 0.9}
           />
         </section>
 

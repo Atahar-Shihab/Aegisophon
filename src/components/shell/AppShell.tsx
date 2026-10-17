@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { NavigationSidebar } from './NavigationSidebar';
 import { TopHeader } from './TopHeader';
 import { CommandPalette } from './CommandPalette';
+import { IntegrationModal } from './IntegrationModal';
 import { WorkspaceRoleProvider } from '@/context/WorkspaceRoleContext';
 
 interface AppShellProps {
@@ -13,6 +14,7 @@ interface AppShellProps {
 
 export function AppShell({ children, title }: AppShellProps) {
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [integrationModalOpen, setIntegrationModalOpen] = useState(false);
 
   return (
     <WorkspaceRoleProvider>
@@ -20,21 +22,29 @@ export function AppShell({ children, title }: AppShellProps) {
         {/* Sidebar Rail */}
         <NavigationSidebar />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <TopHeader
-          title={title}
-          onOpenCommandPalette={() => setPaletteOpen(true)}
-        />
-        <main className="flex-1 p-8 overflow-y-auto">{children}</main>
-      </div>
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopHeader
+            title={title}
+            onOpenCommandPalette={() => setPaletteOpen(true)}
+            onOpenIntegrationModal={() => setIntegrationModalOpen(true)}
+          />
+          <main className="flex-1 p-8 overflow-y-auto">{children}</main>
+        </div>
 
-      {/* Global Command Palette */}
-      <CommandPalette
-        isOpen={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-      />
-    </div>
+        {/* Global Command Palette */}
+        <CommandPalette
+          isOpen={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          onOpenIntegrationModal={() => setIntegrationModalOpen(true)}
+        />
+
+        {/* SDK Integration Modal */}
+        <IntegrationModal
+          isOpen={integrationModalOpen}
+          onClose={() => setIntegrationModalOpen(false)}
+        />
+      </div>
     </WorkspaceRoleProvider>
   );
 }
