@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { UserRole, RbacAction, RbacService } from '@/core/security/rbac';
+import { UserRole, RbacAction, canPerformAction } from '@/core/security/rbac-matrix';
 
 export interface Workspace {
   id: string;
@@ -90,7 +90,7 @@ export function WorkspaceRoleProvider({ children }: { children: ReactNode }) {
   };
 
   const can = (action: RbacAction): boolean => {
-    return RbacService.can(activeRole, action);
+    return canPerformAction(activeRole, action);
   };
 
   const isReadOnly = activeRole === 'viewer';

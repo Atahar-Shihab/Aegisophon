@@ -1,28 +1,12 @@
 import { NextResponse } from 'next/server';
 import { AuditLogRepository } from '../../repositories/audit-log.repository';
+import { UserRole, RbacAction, canPerformAction } from './rbac-matrix';
 
-export type UserRole = 'owner' | 'admin' | 'developer' | 'viewer';
-
-export type RbacAction =
-  | 'create_key'
-  | 'revoke_key'
-  | 'update_policy'
-  | 'inject_chaos'
-  | 'reset_circuit'
-  | 'read_data';
-
-const PERMISSIONS: Record<UserRole, Set<RbacAction>> = {
-  owner: new Set(['create_key', 'revoke_key', 'update_policy', 'inject_chaos', 'reset_circuit', 'read_data']),
-  admin: new Set(['create_key', 'revoke_key', 'update_policy', 'inject_chaos', 'reset_circuit', 'read_data']),
-  developer: new Set(['inject_chaos', 'reset_circuit', 'read_data']),
-  viewer: new Set(['read_data']),
-};
+export { type UserRole, type RbacAction, canPerformAction };
 
 export class RbacService {
   public static can(role: UserRole, action: RbacAction): boolean {
-    const rolePermissions = PERMISSIONS[role];
-    if (!rolePermissions) return false;
-    return rolePermissions.has(action);
+    return canPerformAction(role, action);
   }
 
   public static enforce(

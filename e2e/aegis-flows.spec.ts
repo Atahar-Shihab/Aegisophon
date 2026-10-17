@@ -6,12 +6,12 @@ test.describe('AegisGateway E2E Verification Suite', () => {
 
     // Verify main brand heading or page elements
     await expect(page.locator('text=AegisGateway').first()).toBeVisible();
-    await expect(page.locator('text=Total Requests').first()).toBeVisible();
-    await expect(page.locator('text=P95 Tail Latency').first()).toBeVisible();
+    await expect(page.locator('text=Total Gateway Requests').first()).toBeVisible();
+    await expect(page.locator('text=P95 Pipeline Latency').first()).toBeVisible();
     await expect(page.locator('text=Semantic Cache Hit Ratio').first()).toBeVisible();
 
     // Verify Traffic Simulator button exists in header
-    const trafficBtn = page.locator('button:has-text("Traffic")');
+    const trafficBtn = page.locator('button:has-text("Traffic")').first();
     if (await trafficBtn.isVisible()) {
       await trafficBtn.click();
       await page.waitForTimeout(1000);
@@ -45,7 +45,7 @@ test.describe('AegisGateway E2E Verification Suite', () => {
     await page.waitForTimeout(500);
 
     // Verify Complexity Meter reacts (score > 0.0)
-    await expect(page.locator('text=Estimated Complexity, text=Complexity Score').first()).toBeVisible();
+    await expect(page.locator('text=MoE Complexity Classifier').first()).toBeVisible();
 
     // Submit execution
     const submitBtn = page.locator('button:has-text("Dispatch Request"), button:has-text("Send")').first();

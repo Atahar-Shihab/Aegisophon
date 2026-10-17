@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkspaceRole, WORKSPACES, Workspace } from '@/context/WorkspaceRoleContext';
-import { UserRole } from '@/core/security/rbac';
+import { UserRole } from '@/core/security/rbac-matrix';
 
 interface TopHeaderProps {
   title?: string;
