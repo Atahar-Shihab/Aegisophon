@@ -1,14 +1,14 @@
 # AegisGateway Concurrency Benchmark Results
 
-Measured under synthetic enterprise traffic load on `2026-10-16T22:14:02.434Z`.
+Measured under synthetic enterprise traffic load on `2026-10-17T09:29:46.488Z`.
 
 | Metric | Result | Description |
 | :--- | :--- | :--- |
-| **Throughput** | **713.6 req/sec** | Sustained concurrency ($N=10$) |
-| **P50 Latency** | **0.1 ms** | Median response latency across all hops |
-| **P90 Latency** | **113.3 ms** | 90th percentile latency |
-| **P95 Latency** | **113.7 ms** | 95th percentile latency |
-| **P99 Latency** | **115 ms** | 99th percentile tail latency |
+| **Throughput** | **726.6 req/sec** | Sustained concurrency ($N=10$) |
+| **P50 Latency** | **0 ms** | Median response latency across all hops |
+| **P90 Latency** | **114.2 ms** | 90th percentile latency |
+| **P95 Latency** | **114.6 ms** | 95th percentile latency |
+| **P99 Latency** | **115.9 ms** | 99th percentile tail latency |
 | **Semantic Cache Hit Ratio** | **90%** | Sub-15ms zero-cost responses |
 | **FinOps Cost Savings** | **$0.166287 USD** | Cumulative savings vs Frontier Baseline |
 | **Success Rate** | **100.0%** | Zero drops, fault-tolerant failovers |
