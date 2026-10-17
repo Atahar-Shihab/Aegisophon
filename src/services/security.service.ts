@@ -1,14 +1,13 @@
 import crypto from 'crypto';
 import { ApiKeyRecord } from '../core/types';
+import { ApiKeyRepository } from '../repositories/api-key.repository';
 
 export class SecurityService {
   private static instance: SecurityService;
-  private keys: Map<string, ApiKeyRecord> = new Map(); // id -> record
-  private hashToId: Map<string, string> = new Map(); // keyHash -> id
+  private repository: ApiKeyRepository;
 
   private constructor() {
-    // Pre-seed default master demo key
-    this.seedDefaultKey();
+    this.repository = ApiKeyRepository.getInstance();
   }
 
   public static getInstance(): SecurityService {
@@ -27,29 +26,6 @@ export class SecurityService {
     const prefix = rawKey.substring(0, 12);
     const suffix = rawKey.substring(rawKey.length - 4);
     return `${prefix}...${suffix}`;
-  }
-
-  private seedDefaultKey(): void {
-    const defaultRaw = 'ag_live_demo_enterprise_master_key_9f8a3b1c';
-    const hash = SecurityService.hashKey(defaultRaw);
-    const id = 'key_master_demo';
-
-    const record: ApiKeyRecord = {
-      id,
-      name: 'Default Enterprise Master Demo Key',
-      keyPrefix: SecurityService.maskKey(defaultRaw),
-      keyHash: hash,
-      tenantId: 'tenant_enterprise_default',
-      role: 'admin',
-      rateLimitRpm: 600,
-      rateLimitTpm: 500_000,
-      createdAt: new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString(),
-      status: 'active',
-      lastUsedAt: new Date().toISOString(),
-    };
-
-    this.keys.set(id, record);
-    this.hashToId.set(hash, id);
   }
 
   /**
@@ -88,9 +64,7 @@ export class SecurityService {
       status: 'active',
     };
 
-    this.keys.set(id, record);
-    this.hashToId.set(keyHash, id);
-
+    this.repository.saveSync(record);
     return { rawKey, record };
   }
 
@@ -101,23 +75,19 @@ export class SecurityService {
     // If no key provided in demo mode, accept default master
     if (!rawKey || rawKey.trim().length === 0) {
       const defaultId = 'key_master_demo';
-      const record = this.keys.get(defaultId);
+      const record = this.repository.findByIdSync(defaultId);
       if (record && record.status === 'active') {
         record.lastUsedAt = new Date().toISOString();
+        this.repository.saveSync(record);
         return { valid: true, record };
       }
       return { valid: false, reason: 'Missing API Key' };
     }
 
     const hash = SecurityService.hashKey(rawKey);
-    const id = this.hashToId.get(hash);
-    if (!id) {
-      return { valid: false, reason: 'Invalid API Key' };
-    }
-
-    const record = this.keys.get(id);
+    const record = this.repository.findByHashSync(hash);
     if (!record) {
-      return { valid: false, reason: 'Key record not found' };
+      return { valid: false, reason: 'Invalid API Key' };
     }
 
     if (record.status !== 'active') {
@@ -129,23 +99,20 @@ export class SecurityService {
     }
 
     record.lastUsedAt = new Date().toISOString();
+    this.repository.saveSync(record);
     return { valid: true, record };
   }
 
   public listKeys(tenantId = 'tenant_enterprise_default'): ApiKeyRecord[] {
-    const list: ApiKeyRecord[] = [];
-    this.keys.forEach((rec) => {
-      if (rec.tenantId === tenantId) {
-        list.push(rec);
-      }
-    });
+    const list = this.repository.findAllSync(tenantId);
     return list.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   public revokeKey(id: string): boolean {
-    const record = this.keys.get(id);
+    const record = this.repository.findByIdSync(id);
     if (!record) return false;
     record.status = 'revoked';
+    this.repository.saveSync(record);
     return true;
   }
 }

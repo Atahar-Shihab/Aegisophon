@@ -1,21 +1,12 @@
 import { RoutingPolicy } from '../core/types';
+import { PolicyRepository } from '../repositories/policy.repository';
 
 export class PolicyService {
   private static instance: PolicyService;
-  private policies: Map<string, RoutingPolicy> = new Map();
+  private repository: PolicyRepository;
 
   private constructor() {
-    this.policies.set('tenant_enterprise_default', {
-      tenantId: 'tenant_enterprise_default',
-      mode: 'auto-moe',
-      semanticCacheThreshold: 0.92,
-      complexityCutoffTier1: 0.35,
-      complexityCutoffTier2: 0.70,
-      primaryProvider: 'gemini',
-      fallbackProvider: 'anthropic',
-      maxMonthlyBudgetUsd: 5000,
-      currentMonthlySpendUsd: 418.95,
-    });
+    this.repository = PolicyRepository.getInstance();
   }
 
   public static getInstance(): PolicyService {
@@ -26,40 +17,21 @@ export class PolicyService {
   }
 
   public getPolicy(tenantId = 'tenant_enterprise_default'): RoutingPolicy {
-    let policy = this.policies.get(tenantId);
-    if (!policy) {
-      policy = {
-        tenantId,
-        mode: 'auto-moe',
-        semanticCacheThreshold: 0.92,
-        complexityCutoffTier1: 0.35,
-        complexityCutoffTier2: 0.70,
-        primaryProvider: 'gemini',
-        fallbackProvider: 'anthropic',
-        maxMonthlyBudgetUsd: 5000,
-        currentMonthlySpendUsd: 0,
-      };
-      this.policies.set(tenantId, policy);
-    }
-    return { ...policy };
+    return this.repository.getSync(tenantId);
   }
 
   public updatePolicy(
     tenantId: string,
     updates: Partial<Omit<RoutingPolicy, 'tenantId'>>
   ): RoutingPolicy {
-    const current = this.getPolicy(tenantId);
-    const updated = {
-      ...current,
-      ...updates,
-    };
-    this.policies.set(tenantId, updated);
-    return { ...updated };
+    return this.repository.updateSync(tenantId, updates);
   }
 
   public addSpend(tenantId: string, amountUsd: number): void {
-    const policy = this.getPolicy(tenantId);
-    policy.currentMonthlySpendUsd = Number((policy.currentMonthlySpendUsd + amountUsd).toFixed(4));
-    this.policies.set(tenantId, policy);
+    this.repository.addSpendSync(tenantId, amountUsd);
+  }
+
+  public listAllPolicies(): RoutingPolicy[] {
+    return this.repository.listAllSync();
   }
 }
