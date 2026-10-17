@@ -125,7 +125,8 @@ export interface AuditLogEntry {
     | 'CHAOS_INJECTED'
     | 'CIRCUIT_OVERRIDE'
     | 'POLICY_UPDATED'
-    | 'SIMULATOR_TOGGLED';
+    | 'SIMULATOR_TOGGLED'
+    | 'ACCESS_DENIED_RBAC';
   targetResource: string;
   ipAddress: string;
   diff: {
